@@ -5,6 +5,14 @@ import sys
 import random
 import pickle
 
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
+from pathlib import Path
+from queue import Empty, Queue
+
+from decorators import log_operation
+
 from figure_iterator import FigureIterator
 from button import Button
 from oval import Oval
@@ -53,14 +61,57 @@ buttons.append(button5)
 isMoving = False
 chosenfigure = None
 
+@log_operation
+def save_project(filename, saved_figures):
+    path = Path(filename)
+    temporary = path.with_suffix(".pkl.tmp")
+    try:
+        with temporary.open("wb") as file:
+            pickle.dump(saved_figures, file)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+@log_operation
+def load_project(filename):
+    with open(filename, "rb") as file:
+        return pickle.load(file)
+
+
+logging.basicConfig(level=logging.INFO)
+io_pool = ThreadPoolExecutor(max_workers=1)
+io_results = Queue()
+pending_io = None
+
 def figures_at(figures, position):
     for fig in reversed(figures):
         if fig.is_clicked(position):
             yield fig
 
 while True:
+    try:
+        completed = io_results.get_nowait()
+    except Empty:
+        pass
+    else:
+        try:
+            result = completed.result()
+            if pending_io == "load":
+                figures = result
+                chosenfigure = None
+                isMoving = False
+                print(f"Wczytano {project_file}")
+            else:
+                print(f"Zapisano {project_file}")
+        except (OSError, EOFError, pickle.PickleError) as error:
+            print(f"Błąd operacji na pliku: {error}")
+        finally:
+            pending_io = None
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            io_pool.shutdown(wait=True)
             pygame.quit()
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -75,11 +126,16 @@ while True:
                     oval = Oval(400, 300, 100, random_color())
                     figures.append(oval)
                 elif button.is_clicked(event.pos) and button.title == "SAVE":
-                    with open(project_file, "wb") as file:
-                        pickle.dump(figures, file)
+                   if pending_io is None:
+                        pending_io = "save"
+                        snapshot = deepcopy(figures)
+                        future = io_pool.submit(save_project, project_file, snapshot)
+                        future.add_done_callback(io_results.put)
                 elif button.is_clicked(event.pos) and button.title == "LOAD":
-                    with open(project_file, "rb") as file:
-                        figures = pickle.load(file)
+                    if pending_io is None:
+                        pending_io = "load"
+                        future = io_pool.submit(load_project, project_file)
+                        future.add_done_callback(io_results.put)
 
             for fig in figures:
                 if fig.is_clicked(event.pos):
