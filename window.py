@@ -42,6 +42,11 @@ buttons.append(button5)
 isMoving = False
 chosenfigure = None
 
+def figures_at(figures, position):
+    for fig in reversed(figures):
+        if fig.is_clicked(position):
+            yield fig
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -67,8 +72,8 @@ while True:
 
             for fig in figures:
                 if fig.is_clicked(event.pos):
-                    isMoving = True
-                    chosenfigure = fig
+                    chosenfigure = next(figures_at(figures, event.pos), None)
+                    isMoving = chosenfigure is not None
 
         elif event.type == pygame.MOUSEBUTTONUP:
             chosenfigure = None
@@ -87,7 +92,12 @@ while True:
     for button in buttons:
         button.draw(screen)
 
-    text = font.render(f"Liczba figur: {len(figures)}", True, BLACK_COLOR)
+    circle_count = sum(1 for fig in figures if isinstance(fig, Oval))
+    text = font.render(
+    f"Liczba figur: {len(figures)} | Koła: {circle_count}",
+    True,
+    BLACK_COLOR,
+)
     screen.blit(text, (10, 580))
 
     pygame.display.flip()
