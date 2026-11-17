@@ -3,6 +3,7 @@ import sys
 import random
 import pickle
 
+from figure_iterator import FigureIterator
 from button import Button
 from oval import Oval
 from rectangle import Rectangle
@@ -80,7 +81,7 @@ while True:
 
     screen.fill(BACKGROUND_COLOR)
 
-    for fig in figures:
+    for fig in FigureIterator(figures):
         fig.draw(screen)
 
     for button in buttons:
