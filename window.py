@@ -1,3 +1,5 @@
+import argparse
+from validation import parse_color, parse_project_name
 import pygame
 import sys
 import random
@@ -10,7 +12,16 @@ from rectangle import Rectangle
 from triangle import Triangle
 
 def random_color():
+    if args.color is not None:
+        return args.color
     return random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--project", type=parse_project_name, default="projekt")
+parser.add_argument("--color", type=parse_color)
+args = parser.parse_args()
+
+project_file = f"{args.project}.pkl"
 
 pygame.init()
 
@@ -64,10 +75,10 @@ while True:
                     oval = Oval(400, 300, 100, random_color())
                     figures.append(oval)
                 elif button.is_clicked(event.pos) and button.title == "SAVE":
-                    with open("projekt.pkl", "wb") as file:
+                    with open(project_file, "wb") as file:
                         pickle.dump(figures, file)
                 elif button.is_clicked(event.pos) and button.title == "LOAD":
-                    with open("projekt.pkl", "rb") as file:
+                    with open(project_file, "rb") as file:
                         figures = pickle.load(file)
 
             for fig in figures:
