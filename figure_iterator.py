@@ -1,4 +1,5 @@
 class FigureIterator:
+    """Przechodź kolejno po figurach, pamiętając bieżącą pozycję."""
     def __init__(self, figures):
         self.figures = figures
         self.index = 0

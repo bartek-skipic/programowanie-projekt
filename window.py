@@ -7,6 +7,9 @@ from copy import deepcopy
 from pathlib import Path
 from queue import Empty, Queue
 
+from collections.abc import Iterator
+from geometricfigure import GeometricFigure
+
 import pygame
 
 from button import Button
@@ -24,12 +27,17 @@ BLACK_COLOR = (0, 0, 0)
 WHITE_COLOR = (255, 255, 255)
 
 
-def random_color():
+def random_color() -> tuple[int, int, int]:
+    """Wylosuj kolor RGB."""
     return random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
 
 
 @log_operation
-def save_project(filename, saved_figures):
+def save_project(
+    filename: str,
+    saved_figures: list[GeometricFigure],
+) -> None:
+    """Zapisz figury przez plik tymczasowy."""
     path = Path(filename)
     temporary = path.with_suffix(".pkl.tmp")
     try:
@@ -41,18 +49,24 @@ def save_project(filename, saved_figures):
 
 
 @log_operation
-def load_project(filename):
+def load_project(filename: str) -> list[GeometricFigure]:
+    """Wczytaj figury z pliku projektu."""
     with open(filename, "rb") as file:
         return pickle.load(file)
 
 
-def figures_at(figures, position):
+def figures_at(
+    figures: list[GeometricFigure],
+    position: tuple[int, int],
+) -> Iterator[GeometricFigure]:
+    """Zwracaj figury pod kursorem od ostatnio narysowanej."""
     for fig in reversed(figures):
         if fig.is_clicked(position):
             yield fig
 
 
-def main():
+def main() -> None:
+    """Uruchom okno aplikacji i obsługę zdarzeń."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--project", type=parse_project_name, default="projekt")
     parser.add_argument("--color", type=parse_color)

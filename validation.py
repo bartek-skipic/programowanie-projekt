@@ -9,6 +9,7 @@ HEX_COLOR = re.compile(
 
 
 def parse_project_name(value: str) -> str:
+    """Sprawdź poprawność nazwy projektu."""
     if PROJECT_NAME.fullmatch(value) is None:
         raise argparse.ArgumentTypeError(
             "Nazwa projektu musi mieć 1–40 znaków: litery A–Z, cyfry, _ lub -."
@@ -17,6 +18,7 @@ def parse_project_name(value: str) -> str:
 
 
 def parse_color(value: str) -> tuple[int, int, int]:
+    """Zamień kolor zapisany jako #RRGGBB na krotkę RGB."""
     match = HEX_COLOR.fullmatch(value)
     if match is None:
         raise argparse.ArgumentTypeError("Podaj kolor w formacie #RRGGBB.")
